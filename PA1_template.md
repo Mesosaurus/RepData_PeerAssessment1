@@ -1,12 +1,12 @@
 ---
-title: "Peer Assessment 1"
+title: "Reproducible Research - Peer Assessment 1"
 author: "Stephen Lee"
 date: "November 15, 2015"
 output: html_document
 ---
 
-###What is the mean total number of steps taken per day?
-The first part of this peer assessment is to compute the mean and median of the total number of steps every day. First, let's load the "Activity Monitoring" dataset and get a feel for the data.
+###Part 1: Loading and Preprocessing the data
+Before performing any computations, let's load the "Activity Monitoring" dataset and get a feel for the data.
 
 
 ```r
@@ -22,57 +22,106 @@ str (activity)
 ```
 
 
+
+###Part 2: What is the mean total number of steps taken per day?
 After loading the dataset, we can now calculate the total number of steps taken per day and plot a histogram showing this.
 
 
 ```r
-total_steps <- tapply (activity$steps, activity$date, sum, na.rm = TRUE)
-total_steps_df <- as.data.frame (total_steps)
-colnames (total_steps_df) <- c ("Steps")
-head (total_steps_df)
+total_steps_daily <- aggregate (steps ~ date, activity, sum, na.rm = TRUE)
+head (total_steps_daily)
 ```
 
 ```
-##            Steps
-## 2012-10-01     0
-## 2012-10-02   126
-## 2012-10-03 11352
-## 2012-10-04 12116
-## 2012-10-05 13294
-## 2012-10-06 15420
+##         date steps
+## 1 2012-10-02   126
+## 2 2012-10-03 11352
+## 3 2012-10-04 12116
+## 4 2012-10-05 13294
+## 5 2012-10-06 15420
+## 6 2012-10-07 11015
 ```
 
 ```r
-hist (total_steps_df$Steps, main = "Frequency of Daily Steps", xlab = "Total # of Steps Daily", col = "red")
+hist (total_steps_daily$steps, col = "red", main = "Frequency vs. Daily Steps", xlab = "Total  Number of Steps Taken Each Day")
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
 
-From the histogram, the 10,000-15,000 step range has the highest frequency.
+Based on the histogram above, the 10,000-15,000 step range has the highest frequency.
+
+Additionally, we can also increase the number of bins in the histogram in order to get a more revealing distribution and better understand our data.
+
+
+```r
+histinfo <- hist (total_steps_daily$steps, col = "red", main = "Frequency vs Daily Steps", xlab = "Total  Number of Steps Taken Each Day", breaks = 11, axes = FALSE)
+axis (side = 1, at = c (0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000, 22000), cex.axis = 0.70)
+axis (side = 2, at = seq (0, 16, by = 4))
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
+
+```r
+histinfo
+```
+
+```
+## $breaks
+##  [1]     0  2000  4000  6000  8000 10000 12000 14000 16000 18000 20000
+## [12] 22000
+## 
+## $counts
+##  [1]  2  2  3  3  7 16 10  7  1  0  2
+## 
+## $density
+##  [1] 1.886792e-05 1.886792e-05 2.830189e-05 2.830189e-05 6.603774e-05
+##  [6] 1.509434e-04 9.433962e-05 6.603774e-05 9.433962e-06 0.000000e+00
+## [11] 1.886792e-05
+## 
+## $mids
+##  [1]  1000  3000  5000  7000  9000 11000 13000 15000 17000 19000 21000
+## 
+## $xname
+## [1] "total_steps_daily$steps"
+## 
+## $equidist
+## [1] TRUE
+## 
+## attr(,"class")
+## [1] "histogram"
+```
+
+Looking at the second histogram now, the 10-12000 step range has the highest count.
 
 Let's now calculate the mean and median total number of steps taken per day. 
 
 
 ```r
-activity_steps <- subset (activity, steps != "NA")
-summary(activity_steps$steps)
+summary (total_steps_daily)
 ```
 
 ```
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    0.00    0.00    0.00   37.38   12.00  806.00
+##          date        steps      
+##  2012-10-02: 1   Min.   :   41  
+##  2012-10-03: 1   1st Qu.: 8841  
+##  2012-10-04: 1   Median :10765  
+##  2012-10-05: 1   Mean   :10766  
+##  2012-10-06: 1   3rd Qu.:13294  
+##  2012-10-07: 1   Max.   :21194  
+##  (Other)   :47
 ```
 
+The median and mean total number of steps taken daily are 10765 and 10766, respectively. 
 
 
-###What is the average daily activity pattern?
+###Part 3: What is the average daily activity pattern?
 The second part of this assignment is to create a time series plot of all the 5-minute intervals and the corresponding average number of steps taken, averaged across all days. First, let's compute the average number of steps taken for each 5-minute interval.
 
 
 ```r
-interval_avg <- aggregate (activity$steps, list(activity$interval), mean, na.rm = TRUE)
-colnames (interval_avg) <- c ("Interval", "Avg_Steps")
-head (interval_avg)
+int_avg <- aggregate (activity$steps, list (activity$interval), mean, na.rm = TRUE)
+colnames (int_avg) <- c ("Interval", "Avg_Steps")
+head (int_avg)
 ```
 
 ```
@@ -89,20 +138,18 @@ Now, let's create the time series plot.
 
 
 ```r
-Interval <- ts (interval_avg$Interval)
-Avg_Steps_Per_Interval <- ts (interval_avg$Avg_Steps)
-plot.ts (Interval, Avg_Steps_Per_Interval, , xlim = c (0, 2500), type = "l")
+plot (int_avg$Interval, int_avg$Avg_Steps, main = "Avg Steps Vs. Interval", xlab = "Interval", ylab = "Avg Steps Per Interval", type = "l")
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
 
-The y-axis in the plot above shows the average number of steps for each 5-minute interval, where as the x-axis gives the intervals itself. The final time interval of each day is 2355, or 23:55/11:55 p.m.
+The y-axis in the plot above shows the average number of steps for each 5-minute interval, whereas the x-axis lists the intervals. The final time interval of each day is 2355, or 23:55/11:55 p.m.
 
 From the time series plot, we can determine the 5-minute interval which has the highest or maximum number of steps.
 
 
 ```r
-interval_avg [which (interval_avg$Avg_Steps == max (interval_avg$Avg_Steps)), ]
+subset (int_avg, Avg_Steps == max (Avg_Steps))
 ```
 
 ```
@@ -110,11 +157,11 @@ interval_avg [which (interval_avg$Avg_Steps == max (interval_avg$Avg_Steps)), ]
 ## 104      835  206.1698
 ```
 
-From the computation, that interval is 8:35 a.m.
+The interval in question is 8:35 a.m.
 
 
 
-###Imputing missing values
+###Part 4: Imputing missing values
 First, let's count the number of "NA's" in the "Activity" data set.
 
 
@@ -150,80 +197,155 @@ head (activity_new)
 ## 306 2.0943396 2012-10-01       25
 ```
 
-With the new "Activity" dataset, we can repeat the first part of the assigment and calculate the total number of steps taken per day and plot a histogram showing this.
+Using the newly created dataset, let's repeat the first part of the assigment and calculate the total number of steps taken per day. Next, plot a histogram showing the new data set and compare it with the first histogram.
 
 
 ```r
-total_steps_new <- tapply (activity_new$steps, activity_new$date, sum, na.rm = TRUE)
-total_steps_new_df <- as.data.frame (total_steps_new)
-colnames (total_steps_new_df) <- c ("Steps")
-head (total_steps_new_df)
+new_total_daily <- tapply (activity_new$steps, activity_new$date, sum)
+head (new_total_daily)
 ```
 
 ```
-##               Steps
-## 2012-10-01 10766.19
-## 2012-10-02   126.00
-## 2012-10-03 11352.00
-## 2012-10-04 12116.00
-## 2012-10-05 13294.00
-## 2012-10-06 15420.00
+## 2012-10-01 2012-10-02 2012-10-03 2012-10-04 2012-10-05 2012-10-06 
+##   10766.19     126.00   11352.00   12116.00   13294.00   15420.00
 ```
 
 ```r
-hist (total_steps_new_df$Steps, main = "Frequency of Daily Steps", xlab = "Total # of Steps Daily", col = "red")
+hist (total_steps_daily$steps, col = "red", main = "Frequency vs. Daily Steps (Before Imputing Interval Mean)", xlab = "Total  Number of Steps Taken Each Day")
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png) 
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
 
-From the histogram, again the 10,000-15,000 step range has the highest frequency.
+```r
+hist (new_total_daily, col = "lightblue", main = "Frequency vs. Daily Steps (After Imputing Interval Mean)", xlab = "Total  Number of Steps Taken Each Day")
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-2.png) 
+
+In the first part of the assignment, I created a second histogram using additional bins. Let's make a comparison for this too.
+
+
+```r
+hist (total_steps_daily$steps, col = "red", main = "Frequency vs Daily Steps (Before Imputing Interval Mean)", xlab = "Total  Number of Steps Taken Each Day", breaks = 11, axes = FALSE)
+axis (side = 1, at = c (0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000, 22000), cex.axis = 0.70)
+axis (side = 2, at = seq (0, 16, by = 4))
+```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+
+```r
+histinfo_2 <- hist (new_total_daily, col = "lightblue", main = "Frequency vs Daily Steps (After Imputing Interval Mean)", xlab = "Total  Number of Steps Taken Each Day", breaks = 11, axes = FALSE)
+axis (side = 1, at = c (0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000, 22000), cex.axis = 0.70)
+axis (side = 2, at = seq (0, 24, by = 4))
+```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-2.png) 
+
+```r
+histinfo_2
+```
+
+```
+## $breaks
+##  [1]     0  2000  4000  6000  8000 10000 12000 14000 16000 18000 20000
+## [12] 22000
+## 
+## $counts
+##  [1]  2  2  3  3  7 24 10  7  1  0  2
+## 
+## $density
+##  [1] 1.639344e-05 1.639344e-05 2.459016e-05 2.459016e-05 5.737705e-05
+##  [6] 1.967213e-04 8.196721e-05 5.737705e-05 8.196721e-06 0.000000e+00
+## [11] 1.639344e-05
+## 
+## $mids
+##  [1]  1000  3000  5000  7000  9000 11000 13000 15000 17000 19000 21000
+## 
+## $xname
+## [1] "new_total_daily"
+## 
+## $equidist
+## [1] TRUE
+## 
+## attr(,"class")
+## [1] "histogram"
+```
+
+For the first histogram, the 10,000-15,000 step range has the highest frequency, just like its counterpart in part 1. This is also true for the second histogram, where the 10-12000 step range has the highest count.
 
 Let's now calculate the new mean and median total number of steps taken per day. 
 
 
 ```r
-summary(activity_new$steps)
+summary(new_total_daily)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    0.00    0.00    0.00   37.38   27.00  806.00
+##      41    9819   10770   10770   12810   21190
 ```
 
-The new mean and median remain the same at 37.38 and 0.0, respectively, However, the impact of replacing missing data with the mean estimates is evidently clear in the new histogram plot, which shows the data in a much more normally distributed pattern.
+The new mean and median are both 10770, which are both very similiar to the first mean (10766) and median (10765). The impact of imputing missing data with the mean estimates is evident in both new histograms, where the distribution is more concentrated around the mean and median of the sample data.
 
 
 
-###Are there differences in activity patterns between weekdays and weekends?
-First, let's create a new factor variable "activity_new_day" in the dataset with 2 levels - 'weekday' and 'weekend' indicating whether a given date is a weekday or weekend day.
+###Part 5: Are there differences in activity patterns between weekdays and weekends?
+First, let's create a new factor variable in the dataset with 2 levels - 'weekday' and 'weekend', indicating whether a given date is a weekday or weekend day.
 
 
 ```r
-weekdays <- c ("Monday", "Tuesday", "Wednesday"< "Thursday", "Friday")
-activity_new_day <- factor ((weekdays (as.Date (activity_new$date)) %in% weekdays), levels = c (TRUE, FALSE), labels = c ("weekday", "weekend"))
-activity_updated <- cbind (activity_new, activity_new_day)
-head (activity_updated)
+wkday <- c ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+Day_Type <- factor ((weekdays (as.Date (activity_new$date)) %in% wkday), levels = c (TRUE, FALSE), labels = c ("weekday", "weekend"))
+final_activity <- as.data.frame (cbind (activity_new, Day = weekdays (as.Date (activity_new$date)), Day_Type))
+head (final_activity)
 ```
 
 ```
-##         steps       date interval activity_new_day
-## 1   1.7169811 2012-10-01        0          weekday
-## 62  0.3396226 2012-10-01        5          weekday
-## 123 0.1320755 2012-10-01       10          weekday
-## 184 0.1509434 2012-10-01       15          weekday
-## 245 0.0754717 2012-10-01       20          weekday
-## 306 2.0943396 2012-10-01       25          weekday
+##         steps       date interval    Day Day_Type
+## 1   1.7169811 2012-10-01        0 Monday  weekday
+## 62  0.3396226 2012-10-01        5 Monday  weekday
+## 123 0.1320755 2012-10-01       10 Monday  weekday
+## 184 0.1509434 2012-10-01       15 Monday  weekday
+## 245 0.0754717 2012-10-01       20 Monday  weekday
+## 306 2.0943396 2012-10-01       25 Monday  weekday
 ```
 
-Using the new "activity_updated" dataset, let's create a panel plot containing a time series plot of the 5-minute interval and the average number of steps taken, averaged across all weekday days or weekend days.
+Using the new dataset, let's create a time series panel plot of the average number of steps taken for each 5-minute interval, averaged across all weekday and weekend days.
 
 
 ```r
+int_wkday <- subset (final_activity, Day_Type == "weekday")
+int_wkend <- subset (final_activity, Day_Type == "weekend")
+
+int_wkday_avg <- aggregate (int_wkday$steps, list (int_wkday$interval), mean)
+colnames (int_wkday_avg) <- c ("Interval", "Avg_Steps")
+int_wkend_avg <- aggregate (int_wkend$steps, list (int_wkend$interval), mean)
+colnames (int_wkend_avg) <- c ("Interval", "Avg_Steps")
+
+int_wkday_df <- cbind (int_wkday_avg, Day_Type = "weekday")
+int_wkend_df <- cbind (int_wkend_avg, Day_Type = "weekend")
+int_final <- rbind (int_wkday_df, int_wkend_df)
+
 library (lattice)
-xyplot(steps ~ interval | activity_new_day, activity_updated, type = "l")
+int_final <- transform (int_final, Day_Type = factor (Day_Type))
+head (int_final)
 ```
 
-![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png) 
+```
+##   Interval  Avg_Steps Day_Type
+## 1        0 2.25115304  weekday
+## 2        5 0.44528302  weekday
+## 3       10 0.17316562  weekday
+## 4       15 0.19790356  weekday
+## 5       20 0.09895178  weekday
+## 6       25 1.59035639  weekday
+```
 
-Looking at both plots, the user was generally more active during the time period of 5:00 - 10:00 am on weekdays commpared to weekends.
+```r
+xyplot(Avg_Steps ~ Interval | Day_Type, int_final, ylab = "Avg Steps Per Interval", type = "l", layout = c (1, 2))
+```
+
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png) 
+
+Looking at the panel plot, the user is more active during the 8:00-9:30 am time period on weekdays. However, more activity (steps) is oberserved during the 12:30-17:30 time period during the weekends.
 
